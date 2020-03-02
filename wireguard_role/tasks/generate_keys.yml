@@ -1,5 +1,5 @@
-#The server keys will be 0.private and 0.public. The client keys will start from 1 onwards.
-#Note the number of clients is declared in "defaults/main.yml".
+# The server keys will be 0.private and 0.public. The client keys will start from 1 onwards.
+# Note the number of clients is declared in "defaults/main.yml".
 
 # This is how we avoid generating new keys every time this is run.
 # To force re-generating everything, before running the
@@ -68,6 +68,20 @@
   shell: "wg-quick down wg0 || true"  # ignore failures
   register: wg_quick_down_out  # For debugging
   when: wg0_conf is not defined or wg0_conf.stat.exists == false
+
+- name: Check if /etc/wireguard dir exists
+  stat:
+    path: /etc/wireguard
+  register: etc_wireguard
+
+- name: Create /etc/ansible is its not exist
+  file:
+    path: /etc/wireguard
+    state: directory
+    mode: 0755
+    group: root
+    owner: root
+  when: etc_wireguard.stat.exists == false
 
 # Should happen last among the config file creations, so if the process 
 # is interrupted we will re-generate everything (the existence of the 

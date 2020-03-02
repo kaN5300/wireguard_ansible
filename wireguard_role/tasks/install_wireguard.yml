@@ -2,18 +2,37 @@
   command: uname -r
   register: kernel_release
 
-- name: Add the WireGuard PPA
-  apt_repository:
-    repo: 'ppa:wireguard/wireguard'
+- name: Copy limit-unstable file
+  copy:
+    src: etc/apt/preferences.d/limit-unstable
+    dest: /etc/apt/preferences.d/limit-unstable
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - wg-install
 
-# Using with_items loop for apt module is deprecated
-- name: Install WireGuard and other requirements 
+- name: Copy sources.list.d/unstable.list file
+  copy:
+    src: etc/apt/sources.list.d/unstable-wireguard.list
+    dest: /etc/apt/sources.list.d/unstable-wireguard.list
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - wg-install
+
+- name: Get architecture
+  shell: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: False
+
+- name: Install kernel headers to compile wireguard with DKMS
   apt:
+    update_cache: yes
     name:
-      - linux-headers-{{ kernel_release.stdout }}
-      - linux-headers-generic
+      - "linux-headers-{{ dpkg_arch.stdout }}"
+      - wireguard
       - wireguard-dkms
       - wireguard-tools
-      - python2.7        
     state: present
-    update_cache: true
